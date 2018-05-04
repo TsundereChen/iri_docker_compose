@@ -1,0 +1,70 @@
+version: "3"
+services:
+    iri:
+        image: iotaledger/iri:v1.4.2.4
+        restart: always
+        ports:
+            - "14265:14265"
+            - "14777:14777/udp"
+            - "15777:15777"
+        volumes:
+            - ./iota.ini:/iri/iota.ini
+            - ./db:/iri/db
+        entrypoint:
+            - "/usr/bin/java"
+            - "-Xmx8g"
+            - "-Xms256m"
+            - "-jar"
+            - "iri.jar"
+            - "-c"
+            - "iota.ini"
+            - "--remote"
+        links:
+            - nelson
+            - field
+            - iota-pm
+    nelson:
+        image: romansemko/nelson.cli:latest
+        restart: always
+        ports:
+            - "18600:18600"
+        entrypoint:
+            - "/usr/local/bin/nelson"
+            - "-r"
+            - iri
+            - "-i"
+            - "14265"
+            - "-u"
+            - "14777"
+            - "-t"
+            - "15777"
+            - "-a"
+            - "18600"
+            - "--getNeighbors"
+    field:
+        image: romansemko/field.cli:latest
+        restart: always
+        ports:
+            - "21310:21310"
+        entrypoint:
+            - "/usr/local/bin/field"
+            - "--name"
+            - < Enter Your Field Node Name Here >
+            - "--seed"
+            - < Enter Your Seed Here >
+            - "-h"
+            - iri
+            - "-i"
+            - "14265"
+            - "-p"
+            - "21310"
+            - "-w"
+            - "-y"
+    iota-pm:
+        image: rootlogin/iota-pm
+        restart: always
+        ports:
+            - "8888:8888"
+        environment:
+            IOTA_NODE: http://iri:14265
+
